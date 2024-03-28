@@ -23,6 +23,8 @@ library(ggthemes)
 library(ranger)
 library(kknn)
 library(purrr)
+library(aws.s3)
+library(readxl)
 ```
 
 
@@ -45,8 +47,23 @@ Choisir la base de données et le pourcentage de test :
 # data <- vins %>% rename(target = quality)
 
 
-#tennis base de données
-data <- readxl::read_xlsx("C:/Users/XX9JQZ/Downloads/archive(3)/atp_mens_tour/2023.xlsx")
+#tennis base de données : premier nettoyage des données
+
+#connexion à la base de données S3 et récupération de la BDD tennis
+aws.s3::get_bucket("jean/tennis", region = "")
+BUCKET <- "jean"
+FILE_KEY_S3 <- "tennis/2023.xlsx"
+data <- 
+  aws.s3::s3read_using(
+    FUN = readxl::read_xlsx,
+    # Mettre les options de FUN ici
+    # delim = ";",
+    object = FILE_KEY_S3,
+    bucket = BUCKET,
+    opts = list("region" = "")
+  )
+
+# data <- readxl::read_xlsx("C:/Users/XX9JQZ/Downloads/archive(3)/atp_mens_tour/2023.xlsx")
 data <- data %>% 
   mutate_at(vars(WRank,LRank,WPts,LPts),as.numeric) #transfo en numérique
 
@@ -56,8 +73,6 @@ recette_data <- recipe(~., data = data) %>%
 data <- prep(recette_data) %>%
   bake(new_data = NULL) 
 rm(recette_data)
-
-data <- data %>% mutate_if(target = )
 
 
 
