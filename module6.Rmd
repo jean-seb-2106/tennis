@@ -64,16 +64,26 @@ data <-
   )
 
 # data <- readxl::read_xlsx("C:/Users/XX9JQZ/Downloads/archive(3)/atp_mens_tour/2023.xlsx")
-data <- data %>% 
-  mutate_at(vars(WRank,LRank,WPts,LPts),as.numeric) #transfo en numérique
+
+
+#explo des données
+# skim(data)
 
 recette_data <- recipe(~., data = data) %>%
-  step_naomit(WRank, LRank,B365W,PSW,MaxW,AvgW) %>% 
-  step_rm(W1,L1,W2,L2,W3,L3,W4,L4,W5,L5,Wsets,Lsets)#enlever les individus avec des valeurs manquantes
-data <- prep(recette_data) %>%
-  bake(new_data = NULL) 
-rm(recette_data)
+  step_mutate_at(c(WRank,LRank,WPts,LPts),fn = as.numeric) %>% #transfo en numérique
+  step_naomit(WRank, LRank,B365W,PSW,MaxW,AvgW) %>% #enlever les individus avec des valeurs manquantes
+  step_rm(W1,L1,W2,L2,W3,L3,W4,L4,W5,L5,Wsets,Lsets) #enlever des variables
 
+data_modif <- prep(recette_data) %>%
+  bake(new_data = NULL) 
+# skim(data_modif)
+
+
+#si le joueur est mieux classé, alors c'est le joueur 1 
+data_modif <- data_modif %>% mutate(j1 = if_else(WRank > LRank,Winner,Loser),
+                                    j2 = if_else(WRank < LRank,Winner,Loser),
+                                    target = if_else(j1 == Winner,1,0)
+                                    )
 
 
 skim(data)
